@@ -8,36 +8,58 @@ video = Video(videoUrl)
 print(video.title)
 print(video.description)
 
-
+#Asking user to choose a format from Audion and Video to download
 formatChoice = input('Choose a file format (Press 1 or 2), \n 1. Video \n 2. Audio \n')
 formatChoice = int(formatChoice)
 
 
 if formatChoice == 1:
 
-    print('Choose a resolution for your Video: ')
-    for resolution in range(len(video.resolutionList)):
+    #Detecting if there are video resolutions available to download
+    if len(video.resolutionList) == 0:
 
-        print(resolution  + 1, video.resolutionList[resolution], sep= '    ')
+        print('Video is not avaiable to download :)')
+    else:
 
-    resolutionChoice = input('Choose corresponding number to select: ')
-    resolutionChoice = int(resolutionChoice) - 1
-    
-    video.downloadVideo(video.resolutionList[resolutionChoice])
+        print('Choose a resolution for your Video: ')
+
+        for resolution in range(len(video.resolutionList)):
+
+            print(resolution  + 1, video.resolutionList[resolution], sep= '    ')
+
+        #Asking the user to choose a resolution for the download
+        resolutionChoice = input('Choose corresponding number to select: ')
+
+        #Decrementing the user input to matach the list index
+        resolutionChoice = int(resolutionChoice) - 1
+
+        #Calling downloadVideo function from Video class to initialize video downloading
+        video.downloadVideo(video.resolutionList[resolutionChoice])
 
     
 elif formatChoice == 2:
     
-    print('Choose a quality for your Audio: ')
-    for soundQuality in range(len(video.soundQualityList)):
+    #Detecting if there are sound qualities available to download
+    if len(video.soundQualityList) == 0:
 
-        print(soundQuality + 1, video.soundQualityList[soundQuality], sep= '    ')
+        print('Video is not avaiable to download :)')
+    else:
+        
+        print('Choose a quality for your Audio: ')
 
-    qualityChoice = input('Choose corresponding number to select: ')
+    
+        for soundQuality in range(len(video.soundQualityList)):
 
-    qualityChoice = int(qualityChoice) - 1
+            print(soundQuality + 1, video.soundQualityList[soundQuality], sep= '    ')
 
-    video.downloadAudio(video.soundQualityList[qualityChoice])
+        #Asking the user to choose a resolution for the download
+        qualityChoice = input('Choose corresponding number to select: ')
+
+        #Decrementing the user input to matach the list index
+        qualityChoice = int(qualityChoice) - 1
+        
+        #Calling downloadAudio function from Video class to initialize Audio downloading
+        video.downloadAudio(video.soundQualityList[qualityChoice])
    
 
 else:
