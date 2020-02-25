@@ -1,4 +1,8 @@
 from pytube import YouTube
+from pytube.exceptions import LiveStreamError, VideoUnavailable
+import requests
+import sys
+from urllib.error import HTTPError
 
 class Video:
     """Extractor let's you get video data from youtube url, and gives video resolution and sound quality lists for the requested video."""
@@ -14,9 +18,11 @@ class Video:
 
         self.downloadedBytes = self.sizeInBytes - bytes_remaining
 
-        self.percentage = self.downloadedBytes / self.sizeInBytes * 100
-        self.percentage = round(self.percentage, 1)
-        print('{} %'.format(self.percentage))
+        self.percentage = self.downloadedBytes / self.sizeInBytes * 100 #Calculating the percentage of download progress
+        
+        self.percentage = round(self.percentage, 1) #Rounding the percentage of progress to 1 decimal value
+
+        print('{} %'.format(self.percentage)) #Displaying the percentage progress
 
 
     def downloadComplete(self, stream, file_path):
@@ -26,83 +32,141 @@ class Video:
 
     def __init__(self, videoUrl):
 
-        self.video = YouTube(videoUrl, on_progress_callback = self.downloadProgress , on_complete_callback = self.downloadComplete)
+        try:
 
-        self.title = self.video.title #Extracting Video Tile
+            requests.get(videoUrl)  #Requesting video url to check internet connectivity
+            
+            self.video = YouTube(videoUrl, on_progress_callback = self.downloadProgress , on_complete_callback = self.downloadComplete)
 
-        self.description = self.video.description #Extracting Video Description
+            self.title = self.video.title #Extracting Video Tile
 
-        self.thumbnailUrl= self.video.thumbnail_url #RExtracting Video Tumbnail Url 
+            self.description = self.video.description #Extracting Video Description
+
+            self.thumbnailUrl= self.video.thumbnail_url #RExtracting Video Tumbnail Url 
 
 
-        #Function the stores Video Resolutions in 'resolutionList' and Sond Quality in 'soundQualityLit' in ascending order
+            #Function the stores Video Resolutions in 'resolutionList' and Sond Quality in 'soundQualityLit' in ascending order
 
-        for stream in self.video.streams:
+            for stream in self.video.streams:
 
-            if (stream.resolution != None) and (stream.type == 'video'):
+                if (stream.resolution != None) and (stream.type == 'video') and (stream.audio_codec == 'mp4a.40.2'):
+
+                    
+                    if self.resolutionList.__contains__(stream.resolution): #Avoiding duplication of resolution values
+
+                        continue
+
+                    else:
+                        
+                        #Detecting if the stream is available to download
+                        try:
+
+                            stream.filesize
+
+                            self.resolutionList.append(stream.resolution)
+
+                        except HTTPError:
+
+                            continue
+
+                elif (stream.abr != None) and (stream.type == 'audio'):
+
+                    if self.soundQualityList.__contains__(stream.abr): #Avoiding duplication of sound quality level
+
+                        continue
+
+                    else:
+
+                        #Detecting if the stream is available to download
+                        try:
+
+                            stream.filesize
+
+                            self.soundQualityList.append(stream.abr)
+
+                        except HTTPError:
+
+                            continue
+
+
+            #Sorting video resolutions
+            for resolution in range(len(self.resolutionList)):
+
+                #Removing 'p' from resolutions and converting resolutions to integer
+                self.resolutionList[resolution] = int(self.resolutionList[resolution].replace('p', ''))
+
+
+
+            self.resolutionList.sort() 
+
+            for resolution in range(len(self.resolutionList)):
+
+                #Converting the array into original resolution format
+                self.resolutionList[resolution] = str(self.resolutionList[resolution]) + 'p'
 
                 
-                if self.resolutionList.__contains__(stream.resolution): #Avoiding duplication of resolution values
 
-                    continue
+            for soundQuality in range(len(self.soundQualityList)):
 
-                else:
-
-                    self.resolutionList.append(stream.resolution)
-
-            elif (stream.abr != None) and (stream.type == 'audio'):
-
-                if self.soundQualityList.__contains__(stream.abr): #Avoiding duplication of sound quality level
-
-                    continue
-
-                else:
-
-                    self.soundQualityList.append(stream.abr)
+                #Removing 'kbps' from resolutions and converting resolutions to integer
+                self.soundQualityList[soundQuality] = int(self.soundQualityList[soundQuality].replace('kbps', ''))
 
 
-        #Sorting video resolutions
-        for resolution in range(len(self.resolutionList)):
+            self.soundQualityList.sort()
 
-            #Removing 'p' from resolutions and converting resolutions to integer
-            self.resolutionList[resolution] = int(self.resolutionList[resolution].replace('p', ''))
+            for soundQuality in range(len(self.soundQualityList)):
 
+                #Removing 'kbps' from resolutions and converting resolutions to integer
+                self.soundQualityList[soundQuality] = str(self.soundQualityList[soundQuality]) + 'kbps'
 
+        except LiveStreamError :
 
-        self.resolutionList.sort() 
+            print('This video is a live stram :(')
 
-        for resolution in range(len(self.resolutionList)):
+            sys.exit() #Terminating program
 
-            #Converting the array into original resolution format
-            self.resolutionList[resolution] = str(self.resolutionList[resolution]) + 'p'
+        except VideoUnavailable :
 
-            
+            print('The requested video is unavailable :(')
 
-        for soundQuality in range(len(self.soundQualityList)):
+            sys.exit()
 
-            #Removing 'kbps' from resolutions and converting resolutions to integer
-            self.soundQualityList[soundQuality] = int(self.soundQualityList[soundQuality].replace('kbps', ''))
+        except requests.ConnectionError: #Exception for no internet connectivity
 
+            print('No or slow internet connection :(')
 
-        self.soundQualityList.sort()
+            sys.exit()
 
-        for soundQuality in range(len(self.soundQualityList)):
-
-            #Removing 'kbps' from resolutions and converting resolutions to integer
-            self.soundQualityList[soundQuality] = str(self.soundQualityList[soundQuality]) + 'kbps'
 
     def downloadVideo(self, resolution): #Function to download video by taking resolution as input
 
-        self.sizeInBytes = self.video.streams.filter(only_video= True , res = resolution).first().filesize
+        try:
 
-        self.video.streams.filter(only_video= True , res = resolution).first().download()
+            #Sotring video size to track download progress
+            self.sizeInBytes = self.video.streams.filter( audio_codec= 'mp4a.40.2' , res = resolution ).first().filesize
+
+            #Initiating download
+            self.video.streams.filter( audio_codec= 'mp4a.40.2' , res = resolution ).first().download()
+
+        except requests.ConnectionError :
+
+            print('No or slow internet connection :(')
+
 
 
     def downloadAudio(self, soundQuality): #Function to download video by taking resolution as input
 
-        self.sizeInBytes = self.video.streams.filter(only_audio = True , abr= soundQuality).first().filesize
+        try:   
 
-        self.video.streams.filter(only_audio = True , abr = soundQuality).first().download()
+            #Sotring video size to track download progress
+            self.sizeInBytes = self.video.streams.filter(abr= soundQuality).first().filesize
+
+            #Initiating download
+            self.video.streams.filter(abr = soundQuality).first().download()
+
+        except requests.ConnectionError :
+
+            print('No or slow internet connection :(')
 
         
         
