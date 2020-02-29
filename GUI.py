@@ -14,7 +14,7 @@ from threading import Thread
 """Creating window for the downloader and configuring basic settings"""
 rootWindow =  Tk()
 rootWindow.title('YouTube Video Downlader')
-rootWindow.iconbitmap(r'D:\Python Projects\GitHub\YouTube Downloader\Video Downloader\Assets\windowIcon.ico')
+rootWindow.iconbitmap('windowIcon.ico')
 
 
 #Frame that contains all the elements of the User Interface
@@ -22,11 +22,11 @@ mainFrame = Frame(rootWindow, height = 700 , width = 900 , relief = SUNKEN , bg 
 mainFrame.pack()
 
 #Loading Logo Image
-logoImage = Image.open(r"D:\Python Projects\GitHub\YouTube Downloader\Video Downloader\Assets\logo.png")
+logoImage = Image.open("logo.png")
 logo = ImageTk.PhotoImage(logoImage)
 
 #Loading video Thumbnail and creating photoImage
-thumbnailImage = Image.open(r"D:\Python Projects\GitHub\YouTube Downloader\Video Downloader\Assets\thumbnail.png")
+thumbnailImage = Image.open("thumbnail.png")
 thumbnail = ImageTk.PhotoImage(thumbnailImage)
 
 
